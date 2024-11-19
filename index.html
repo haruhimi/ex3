@@ -1,1 +1,409 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>感情測定実験</title>
+    <script src="https://unpkg.com/jspsych@7.3.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-video-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.2"></script>
+    <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css" />
 
+  </head>
+  <body></body>
+  <script>
+    
+    // Glitchとの連携のための関数
+    function saveData(data){
+    console.log("Attempting to save data...");
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://exultant-closed-toothpaste.glitch.me/save-data');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function() {
+        if(xhr.status === 200){
+            var response = JSON.parse(xhr.responseText);
+            console.log('Data saved successfully:', response);
+            // 成功時のフィードバック
+            alert("データが正常に保存されました。画面を閉じていただいて構いません。");
+        } else {
+            console.error('Error saving data:', xhr.statusText);
+            alert("データの保存中にエラーが発生しました。");
+        }
+    };
+    xhr.onerror = function() {
+        console.error('Network error occurred');
+        alert("ネットワークエラーが発生しました。");
+    };
+    xhr.send(JSON.stringify({data: data}));
+}
+
+    // セットアップ。共通
+    var jsPsych = initJsPsych({
+      on_finish: function() {
+            saveData(jsPsych.data.get().csv());           
+     }
+    });
+
+    
+    // プレロード処理。提示タイプ共通、スマホで再生できなくなったから現在無効に
+    //var preload = {
+    //  type: jsPsychPreload,
+    //  auto_preload: true,
+    //  images: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png',
+    //           'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド黒_サブラベル無.png',
+    //           ],
+    //  video: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/49_ニュートラル.mp4',
+    //          'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/優しさ_妹の恋人_編集済.mp4',
+    //          'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/娯楽_メリーに首ったけ_編集済.mp4',
+    //          'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/嫌悪_トレインスポッティング_編集済.mp4',
+    //          'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/怒り_シンドラーのリスト_編集済.mp4',
+    //          'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/恐怖_コピーキャット_編集済.mp4',
+    //          'https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/悲しみ_ライフ・イズ・ビューティフル_編集済.mp4',
+    //          ]
+    //};
+
+    // 使用可能な2つの異なる回答尺度を定義する。質問テンプレから
+    var page_1_options = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+    var page_2_options = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+    // 初期文章。動画テンプレから
+    var pre_trial_001 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>この実験では、映像視聴により想起される感情を測定することを目的としています。</p><p>再生速度の変更は行わないでください。</p>これから１本のデモ動画と、６本の刺激動画を見て、それぞれ質問に答えていただきます。<p></p>',
+      choices: ['次へ']
+    };
+
+    var pre_trial_002 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '次ページのデモ動画で音量調節を行って下さい。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_003 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/49_ニュートラル.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+      response_allowed_while_playing: false　
+    };
+
+    // グリッド画像
+    var trial_004 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド黒_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "<p>上の表は、横軸が快‐不快、縦軸が覚醒‐睡眠を示し、中心のマスが平均的、中立的な感情を示します。</p><p>例えば、興奮している時は右上方向のマスが当てはまり、リラックスしている時は右下方向のマスが当てはまります。</p><p>本実験では、この表を用いて動画視聴後の感情を測定していきます。</p>今回は黒く塗りつぶされたマスのアルファベットと数字の組み合わせ(例.A-1など)を、次のページで選択してください。",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_005 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット (今回は E の列)", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字 (今回は 5 の行)", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+
+    var pre_trial_006 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>ここまでで実験の説明は終わりです。</p><p>次ページから動画の説明を読み、再生される動画を視聴し、質問に答えていってください。</p><p></p>',
+      choices: ['次へ']
+    };
+
+    // ここでグリッド画像の感情測定が必要かもしれない、開始時の感情を測定する必要性？ いらない決定
+    
+    // 動画の説明文
+    var trial_101 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>動画の説明</p><p></p>ベニーが喫茶店でバカを演じる。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_102 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/優しさ_妹の恋人_編集済.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+    //  response_allowed_while_playing: false　//本番では有効に
+    };
+
+    // グリッド画像
+    var trial_103 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "現在の感情に当てはまるマスのアルファベットと数字の組み合わせを、次のページで選択してください",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_104 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+    
+    // 以下、「動画、画像、質問」の無限ループで行けそう
+
+    // 動画の説明文
+    var trial_201 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>動画の説明</p><p></p>テッドが犬と喧嘩する。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_202 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/娯楽_メリーに首ったけ_編集済.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+    //  response_allowed_while_playing: false　//本番では有効に
+    };
+
+    // グリッド画像
+    var trial_203 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "現在の感情に当てはまるマスのアルファベットと数字の組み合わせを、次のページで選択してください",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_204 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+    
+    // 動画の説明文
+    var trial_301 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>動画の説明</p><p></p><p>禁断症状に苦しんでいる麻薬中毒者のマークは、激しい下痢に見舞われ、やむなく非常に汚い公衆トイレに行く。</p>排便後、マークは買ったばかりのヘロインの錠剤を肛門に隠したことを思い出す。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_302 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/嫌悪_トレインスポッティング_編集済.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+    //  response_allowed_while_playing: false　//本番では有効に
+    };
+
+    // グリッド画像
+    var trial_303 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "現在の感情に当てはまるマスのアルファベットと数字の組み合わせを、次のページで選択してください",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_304 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+    
+    // 動画の説明文
+    var trial_401 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>動画の説明</p><p></p><p>兵士達が工場で働く囚人を選んでいる朝、</p>目を覚ました強制収容所の司令官がバルコニーに行き、収容所の囚人たちにライフルを乱射する。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_402 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/怒り_シンドラーのリスト_編集済.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+    //  response_allowed_while_playing: false　//本番では有効に
+    };
+
+    // グリッド画像
+    var trial_403 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "現在の感情に当てはまるマスのアルファベットと数字の組み合わせを、次のページで選択してください",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_404 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+    
+    // 動画の説明文
+    var trial_501 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>動画の説明</p><p></p>モナハン刑事は、トイレへ犯人を探しに行く。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_502 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/恐怖_コピーキャット_編集済.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+    //  response_allowed_while_playing: false　//本番では有効に
+    };
+
+    // グリッド画像
+    var trial_503 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "現在の感情に当てはまるマスのアルファベットと数字の組み合わせを、次のページで選択してください",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_504 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+    
+    // 動画の説明文
+    var trial_601 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>動画の説明</p><p></p>女装した父親を、警官が追いかける。<p></p>',
+      choices: ['次へ']
+    };
+
+    // 動画
+    var trial_602 = {
+      type: jsPsychVideoButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/悲しみ_ライフ・イズ・ビューティフル_編集済.mp4'],
+      choices: ['次へ'],
+      margin_vertical: '10px',
+      margin_horizontal: '8px',
+      prompt: '再生終了したら次のページへ',
+      //352*288　動画解像度
+      width: 704,
+      height: 576,
+      autoplay: true,
+      rate: 1,
+      response_ends_trial: true,
+    //  response_allowed_while_playing: false　//本番では有効に
+    };
+
+    // グリッド画像
+    var trial_603 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: ['https://raw.githubusercontent.com/You211J10175/experiment/refs/heads/main/感情測定グリッド_サブラベル無.png'],
+      // stimulus_width: 400,
+      choices: ['次へ'],
+      prompt: "現在の感情に当てはまるマスのアルファベットと数字の組み合わせを、次のページで選択してください",
+    };    
+
+    // 回答
+    var multi_choice_block_horizontal_604 = {
+      type: jsPsychSurveyMultiChoice,
+      questions: [
+        {prompt: "アルファベット", name: 'アルファベット', options: page_1_options, required: true, horizontal: true,}, 
+        {prompt: "数字", name: '数字', options: page_2_options, required: true, horizontal: true}
+      ],
+      button_label: '次へ',
+    };
+
+    // 締めの一言
+    var trial_701 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<p>これで実験は終了です。</p><p>ご協力ありがとうございました。</p><p>このまま画面を閉じてください。</p>',
+       choices: ['　'],
+    on_finish: function() {
+        // 最終トライアル終了時に特別な処理を追加することも可能
+        console.log("Experiment completed, saving data...");
+    }
+};    
+
+    jsPsych.run([pre_trial_001, pre_trial_002, trial_003, trial_004, multi_choice_block_horizontal_005, pre_trial_006,
+                 trial_101, trial_102, trial_103, multi_choice_block_horizontal_104,
+                 trial_201, trial_202, trial_203, multi_choice_block_horizontal_204,
+                 trial_301, trial_302, trial_303, multi_choice_block_horizontal_304,
+                 trial_401, trial_402, trial_403, multi_choice_block_horizontal_404,
+                 trial_501, trial_502, trial_503, multi_choice_block_horizontal_504,
+                 trial_601, trial_602, trial_603, multi_choice_block_horizontal_604,
+                 trial_701,
+                ]);
+
+  </script>
+</html>
